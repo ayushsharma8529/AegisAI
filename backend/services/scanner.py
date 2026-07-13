@@ -2,6 +2,8 @@ import socket
 from concurrent.futures import ThreadPoolExecutor
 from services.risk_engine import analyze_risk
 from mitre.attack_mapping import get_mitre
+from services.version_detector import detect_version
+from services.cve_lookup import lookup_cves
 
 
 SERVICES = {
@@ -60,6 +62,11 @@ def scan_port(target, port):
 
 
         banner = grab_banner(target, port)
+        version_info = detect_version(service, banner)
+        cves = lookup_cves(
+          version_info["product"],
+          version_info["version"]
+        )
 
 
         risk = analyze_risk({
@@ -75,8 +82,10 @@ def scan_port(target, port):
             "status": "open",
             "severity": severity,
             "banner": banner,
+            "version_info": version_info,
             "risk": risk,
-            "mitre": mitre
+            "mitre": mitre,
+            "cves": cves
         }
 
 
