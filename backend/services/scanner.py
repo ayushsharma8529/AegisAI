@@ -4,6 +4,7 @@ from services.risk_engine import analyze_risk
 from mitre.attack_mapping import get_mitre
 from services.version_detector import detect_version
 from services.cve_lookup import lookup_cves
+from services.host_info import get_host_information
 
 
 SERVICES = {
@@ -43,7 +44,11 @@ def scan_port(target, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(0.5)
 
-    result = sock.connect_ex((target, port))
+    try:
+     result = sock.connect_ex((target, port))
+
+    except socket.gaierror:
+      return None
 
     sock.close()
 
@@ -113,9 +118,10 @@ def run_scan(target, start_port, end_port):
         if result:
             findings.append(result)
 
-
+    host = get_host_information(target, findings)
     return {
         "target": target,
+        "host": host,
         "status": "completed",
         "message": "Port scan executed successfully",
         "findings": findings

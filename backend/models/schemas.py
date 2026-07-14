@@ -9,6 +9,7 @@ class ScanRequest(BaseModel):
 
 class ScanResponse(BaseModel):
     target: str
+    host: dict
     status: str
     message: str
     findings: list
