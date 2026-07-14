@@ -4,10 +4,20 @@ function AnalysisCard({ analysis }) {
   }
 
   return (
-    <div>
-      <h2>AI Security Analysis</h2>
+    <div className="rounded-2xl border border-gray-800 bg-gray-900 p-6 shadow-lg">
 
-      <pre>{analysis}</pre>
+      <h2 className="mb-6 text-2xl font-bold text-cyan-400">
+        🤖 AI Security Analysis
+      </h2>
+
+      <div className="rounded-xl bg-gray-800 p-5">
+
+        <pre className="whitespace-pre-wrap break-words text-gray-200 leading-7 font-sans">
+          {analysis}
+        </pre>
+
+      </div>
+
     </div>
   );
 }
