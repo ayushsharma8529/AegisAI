@@ -18,6 +18,8 @@ def initialize_database():
 
         analysis TEXT,
 
+        result_json TEXT,
+
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
     )

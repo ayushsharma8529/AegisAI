@@ -1,3 +1,4 @@
+import json
 from core.database import get_connection
 
 
@@ -9,13 +10,14 @@ def save_scan(result):
 
     cursor.execute(
         """
-        INSERT INTO scans(target, status, analysis)
-        VALUES (?, ?, ?)
+        INSERT INTO scans(target, status, analysis, result_json)
+        VALUES (?, ?, ?, ?)
         """,
         (
             result["target"],
             result["status"],
-            result["analysis"]
+            result["analysis"],
+            json.dumps(result)
         )
     )
 
@@ -40,3 +42,30 @@ def get_all_scans():
     conn.close()
 
     return rows
+
+
+
+def get_scan_by_id(scan_id):
+
+    conn = get_connection()
+
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT result_json
+        FROM scans
+        WHERE id=?
+    """, (scan_id,))
+
+    row = cursor.fetchone()
+
+    conn.close()
+
+    # if not row:
+    #     return None
+
+    # return json.loads(row[0])
+    if not row or row[0] is None:
+     return None
+
+    return json.loads(row[0])
