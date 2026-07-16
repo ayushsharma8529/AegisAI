@@ -41,6 +41,12 @@ def analyze_risk(finding):
             "issue": "SSH service exposed",
             "recommendation": "Disable password login and use keys"
         }
+    elif port ==443:
+        risk ={
+    "risk_level": "Low",
+    "issue": "HTTPS service exposed",
+    "recommendation": "Ensure TLS is up-to-date and disable weak ciphers"
+}
 
 
     return risk

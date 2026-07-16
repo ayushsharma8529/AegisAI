@@ -5,6 +5,7 @@ import HostCard from "../components/HostCard";
 import FindingsTable from "../components/FindingsTable";
 import AnalysisCard from "../components/AnalysisCard";
 import StatsCards from "../components/StatsCards";
+import HttpInfoCard from "../components/HttpInfoCard";
 
 function Dashboard() {
   const [target, setTarget] = useState("");
@@ -125,6 +126,8 @@ function Dashboard() {
           <HostCard host={result.host} />
 
           <FindingsTable findings={result.findings} />
+
+          <HttpInfoCard findings={result.findings} />
 
           <AnalysisCard analysis={result.analysis} />
 

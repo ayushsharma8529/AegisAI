@@ -1,18 +1,20 @@
 import ssl
 import socket
 from concurrent.futures import ThreadPoolExecutor
-
+from services.banner import grab_banner
 from services.risk_engine import analyze_risk
 from mitre.attack_mapping import get_mitre
 from services.version_detector import detect_version
 from services.cve_lookup import lookup_cves
 from services.host_info import get_host_information
-
+from services.fingerprint import fingerprint_service
+from enumeration.http_enum import enumerate_http
 
 
 SERVICES = {
     21: "FTP",
     22: "SSH",
+    23: "TELNET",
     80: "HTTP",
     443: "HTTPS",
     445: "SMB",
@@ -20,68 +22,10 @@ SERVICES = {
 }
 
 
-def grab_banner(target, port):
-
-    try:
-
-        # HTTP
-        if port == 80:
-
-            sock = socket.create_connection((target, port), timeout=2)
-
-            sock.sendall(
-                f"GET / HTTP/1.1\r\nHost: {target}\r\nConnection: close\r\n\r\n".encode()
-            )
-
-            banner = sock.recv(4096).decode(errors="ignore")
-
-            sock.close()
-
-            return banner
-
-
-        # HTTPS
-        elif port == 443:
-
-            context = ssl.create_default_context()
-
-            raw = socket.create_connection((target, port), timeout=2)
-
-            sock = context.wrap_socket(raw, server_hostname=target)
-
-            sock.sendall(
-                f"GET / HTTP/1.1\r\nHost: {target}\r\nConnection: close\r\n\r\n".encode()
-            )
-
-            banner = sock.recv(4096).decode(errors="ignore")
-
-            sock.close()
-
-            return banner
-
-
-        # Other protocols
-        else:
-
-            sock = socket.create_connection((target, port), timeout=2)
-
-            banner = sock.recv(4096).decode(errors="ignore")
-
-            sock.close()
-
-            if banner:
-                return banner
-
-    except Exception:
-        pass
-
-    return "No banner"
-
-
 def scan_port(target, port):
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(0.5)
+    sock.settimeout(1)
 
     try:
         result = sock.connect_ex((target, port))
@@ -109,6 +53,20 @@ def scan_port(target, port):
 
         # Banner
         banner = grab_banner(target, port)
+        
+        # --- DEBUG PRINTS (BANNER) ---
+        print(f"\n===== PORT {port} =====")
+        print("SERVICE:", service)
+        print("BANNER:", banner[:150])
+
+        # Fingerprint
+        fingerprint = fingerprint_service(
+           service,
+           banner
+        )
+
+        # --- DEBUG PRINT (FINGERPRINT) ---
+        print("FINGERPRINT:", fingerprint)
 
         # Version Detection
         version_info = detect_version(
@@ -121,6 +79,11 @@ def scan_port(target, port):
             version_info["product"],
             version_info["version"]
         )
+        http_info = None
+
+        if port in [80, 443]:
+            http_info = enumerate_http(target, port)
+            
 
         # Risk Engine
         risk = analyze_risk({
@@ -140,16 +103,16 @@ def scan_port(target, port):
             "version_info": version_info,
             "risk": risk,
             "mitre": mitre,
-            "cves": cves
+            "cves": cves,
+            "fingerprint": fingerprint,
+            "http_info": http_info,
         }
 
     return None
 
 
 def run_scan(target, start_port, end_port):
-    print(target)
-    print(start_port)
-    print(end_port)
+    
     findings = []
 
     ports = range(start_port, end_port + 1)

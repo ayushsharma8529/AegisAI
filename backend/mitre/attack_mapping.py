@@ -22,7 +22,13 @@ MITRE_MAPPING = {
         "technique": "T1071",
         "name": "Application Layer Protocol",
         "tactic": "Command and Control"
-    }
+    },
+
+    443: {
+    "technique": "T1190",
+    "name": "Exploit Public-Facing Application",
+    "tactic": "Initial Access"
+     }
 
 }
 
