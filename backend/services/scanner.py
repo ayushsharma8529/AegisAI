@@ -14,6 +14,8 @@ from services.technology_detector import detect_technology
 from enumeration.directory_enum import enumerate_directories
 from enumeration.http_methods import detect_http_methods
 from services.web_vulnerability import check_web_vulnerabilities
+from services.risk_score import calculate_risk_score
+from services.executive_summary import generate_executive_summary
 
 SERVICES = {
     21: "FTP",
@@ -27,7 +29,6 @@ SERVICES = {
 
 
 def scan_port(target, port):
-
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(1)
 
@@ -39,23 +40,20 @@ def scan_port(target, port):
     sock.close()
 
     if result == 0:
-
         # Service Detection
         try:
             service = socket.getservbyport(port).upper()
         except:
             service = SERVICES.get(port, "Unknown")
 
-        # Severity
+        # Severity Base Assignment
         severity = "Low"
-
         if port in [445, 3389]:
             severity = "High"
-
         elif port in [21, 22]:
             severity = "Medium"
 
-        # Banner
+        # Banner Grab
         banner = grab_banner(target, port)
         
         # --- DEBUG PRINTS (BANNER) ---
@@ -63,92 +61,71 @@ def scan_port(target, port):
         print("SERVICE:", service)
         print("BANNER:", banner[:150])
 
-       
         # Version Detection
-        version_info = detect_version(
-            service,
-            banner
-        )
+        version_info = detect_version(service, banner)
 
         # CVE Lookup
         cves = lookup_cves(
             version_info["product"],
             version_info["version"]
         )
+
         # HTTP Enumeration
         http_info = None
-
         if port in [80, 443]:
             http_info = enumerate_http(target, port)
 
-        # HTTP methods
+        # HTTP Methods Detection
         http_methods = None
-
         if port in [80, 443]:
+            http_methods = detect_http_methods(target, port)
+            print("\n===== HTTP METHODS =====")
+            print(http_methods)
 
-           http_methods = detect_http_methods(
-           target,
-           port
-        )
-
-           print("\n===== HTTP METHODS =====")
-           print(http_methods)
-
-        #directory information
+        # Directory Brute/Enumeration
         directory_info = None
-
         if port in [80, 443]:
-           directory_info = enumerate_directories(
-           target,
-           port
-        )
-           print("\n===== DIRECTORIES =====")
-           print(directory_info)
+            directory_info = enumerate_directories(target, port)
+            print("\n===== DIRECTORIES =====")
+            print(directory_info)
+
         # Technology Detection
         technology = None
-
         if http_info:
-          technology = detect_technology(
-          http_info,
-          banner
-        )
-          print("\n===== TECHNOLOGY =====")
-          print(technology)
+            technology = detect_technology(http_info, banner)
+            print("\n===== TECHNOLOGY =====")
+            print(technology)
+
         # TLS Enumeration
         tls_info = None
-
         if port == 443:
             tls_info = enumerate_tls(target, port)    
             print("\n===== TLS INFO =====")
             print(tls_info)
 
-        # web vulnerablility
+        # ✅ FIX 1: Passed http_info dynamically into check_web_vulnerabilities
         web_vulns = []
-
         if port in [80, 443]:
-          web_vulns = check_web_vulnerabilities(
-            target,
-            port,
-         )
+            web_vulns = check_web_vulnerabilities(
+                target,
+                port,
+                http_info
+            )
+            print("\n===== WEB VULNERABILITIES =====")
+            print(web_vulns)
 
-          print("\n===== WEB VULNERABILITIES =====")
-          print(web_vulns)
+        # Fingerprinting
+        fingerprint = fingerprint_service(service, banner, port)
 
-        # fingerprint
-        fingerprint = fingerprint_service(
-           service,
-           banner,
-           port
-         )
-
-        # Risk Engine
+        # Risk Engine Analysis
         risk = analyze_risk({
             "port": port,
             "service": service
         })
 
-        # MITRE
+        # MITRE Mapping
         mitre = get_mitre(port)
+
         return {
             "port": port,
             "service": service,
@@ -172,13 +149,10 @@ def scan_port(target, port):
 
 
 def run_scan(target, start_port, end_port):
-    
     findings = []
-
     ports = range(start_port, end_port + 1)
 
     with ThreadPoolExecutor(max_workers=50) as executor:
-
         results = executor.map(
             lambda port: scan_port(target, port),
             ports
@@ -188,40 +162,32 @@ def run_scan(target, start_port, end_port):
         if result:
             findings.append(result)
 
-    # --- Step 1: Risk Score Calculation ---
-    risk_score = 0
-    for finding in findings:
-        severity = finding.get("severity", "Low")
-
-        if severity == "Critical":
-            risk_score += 40
-        elif severity == "High":
-            risk_score += 20
-        elif severity == "Medium":
-            risk_score += 10
-        else:
-            risk_score += 3
-
-        # Web Vulnerabilities score weightage
-        risk_score += len(
-            finding.get("web_vulnerabilities", [])
-        ) * 2
-
-    # Maximum 100 limit capped
-    risk_score = min(risk_score, 100)
-
+    risk_score = calculate_risk_score(findings)
     host = get_host_information(target, findings)
+
+    # ✅ FIX 2: Corrected Findings Sorting dynamically via Severity Mapping
+    severity_order = {
+        "Critical": 4,
+        "High": 3,
+        "Medium": 2,
+        "Low": 1
+    }
     findings.sort(
-      key=lambda x: x["risk"].get("risk_score", 0),
-      reverse=True
+        key=lambda x: severity_order.get(x.get("severity", "Low"), 0),
+        reverse=True
     )
 
-    # --- Step 2: Added risk_score in final response ---
+    # Executive Summary Generation
+    executive_summary = generate_executive_summary({
+        "risk_score": risk_score
+    })
+
     return {
         "target": target,
         "host": host,
         "status": "completed",
         "message": "Port scan executed successfully",
+        "executive_summary": executive_summary,
         "risk_score": risk_score,
         "findings": findings
     }

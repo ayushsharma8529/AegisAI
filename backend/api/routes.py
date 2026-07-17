@@ -5,8 +5,13 @@ from models.schemas import ScanRequest, ScanResponse
 from services.scanner import run_scan
 from services.report_generator import generate_html_report
 from ai.analyzer import generate_analysis
-from core.scan_repository import save_scan
-from core.scan_repository import get_all_scans
+
+# --- Imports updated with get_scan_by_id ---
+from core.scan_repository import (
+    save_scan,
+    get_all_scans,
+    get_scan_by_id
+)
 
 LAST_SCAN = None
 
@@ -23,7 +28,6 @@ def status():
 
 @router.post("/scan", response_model=ScanResponse)
 def scan(request: ScanRequest):
-
     global LAST_SCAN
 
     result = run_scan(
@@ -44,16 +48,27 @@ def scan(request: ScanRequest):
 
 @router.get("/report", response_class=HTMLResponse)
 def report():
-
     global LAST_SCAN
 
     if LAST_SCAN is None:
         return "<h2>No scan has been performed yet.</h2>"
 
     return generate_html_report(LAST_SCAN)
+
+
+# --- Step 1 & 2: Dynamic ID-based Report Route Added ---
+@router.get("/report/{scan_id}", response_class=HTMLResponse)
+def report_by_id(scan_id: int):
+    scan = get_scan_by_id(scan_id)
+
+    if scan is None:
+        return "<h2>Report not found.</h2>"
+
+    return generate_html_report(scan)
+
+
 @router.get("/history")
 def history():
-
     scans = get_all_scans()
 
     return [

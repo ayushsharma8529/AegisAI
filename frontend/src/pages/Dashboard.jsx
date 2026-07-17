@@ -10,11 +10,10 @@ import TlsInfoCard from "../components/TlsInfoCard";
 import TechnologyCard from "../components/TechnologyCard";
 import DirectoryCard from "../components/DirectoryCard";
 import WebVulnerabilityCard from "../components/WebVulnerabilityCard";
-
-// Chart aur Gauge Imports (Side-by-side render karne ke liye)
 import SeverityChart from "../components/SeverityChart";
 import RiskGauge from "../components/RiskGauge";
 import ServiceChart from "../components/ServiceChart";
+import MitreSummaryCard from "../components/MitreSummaryCard";
 
 function Dashboard() {
   const [target, setTarget] = useState("");
@@ -145,6 +144,8 @@ function Dashboard() {
           <HostCard host={result.host} />
 
           <FindingsTable findings={result.findings} />
+
+          <MitreSummaryCard findings={result.findings} />
 
           <HttpInfoCard findings={result.findings} />
 

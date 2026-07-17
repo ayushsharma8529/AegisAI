@@ -10,7 +10,7 @@ def detect_technology(headers, banner):
 
     text = f"{headers} {banner}".lower()
 
-    # Web Server
+    # --- Web Server ---
     if "nginx" in text:
         tech["server"] = "Nginx"
 
@@ -26,8 +26,28 @@ def detect_technology(headers, banner):
     elif "proxygen" in text:
         tech["server"] = "Proxygen"
 
-    # Languages
+    elif "cloudflare" in text:
+        tech["server"] = "Cloudflare"
 
+    elif "openresty" in text:
+        tech["server"] = "OpenResty"
+
+    elif "caddy" in text:
+        tech["server"] = "Caddy"
+
+    elif "lighttpd" in text:
+        tech["server"] = "Lighttpd"
+
+    elif "tomcat" in text:
+        tech["server"] = "Apache Tomcat"
+
+    elif "gunicorn" in text:
+        tech["server"] = "Gunicorn"
+
+    elif "uvicorn" in text:
+        tech["server"] = "Uvicorn"
+
+    # --- Languages ---
     if "php" in text:
         tech["language"] = "PHP"
 
@@ -37,8 +57,19 @@ def detect_technology(headers, banner):
     elif "express" in text:
         tech["language"] = "Node.js"
 
-    # Framework
+    elif "python" in text:
+        tech["language"] = "Python"
 
+    elif "java" in text:
+        tech["language"] = "Java"
+
+    elif "ruby" in text:
+        tech["language"] = "Ruby"
+
+    elif "go" in text:
+        tech["language"] = "Go"
+
+    # --- Framework ---
     if "laravel" in text:
         tech["framework"] = "Laravel"
 
@@ -51,8 +82,25 @@ def detect_technology(headers, banner):
     elif "spring" in text:
         tech["framework"] = "Spring"
 
-    # CMS
+    elif "fastapi" in text:
+        tech["framework"] = "FastAPI"
 
+    elif "next.js" in text:
+        tech["framework"] = "Next.js"
+
+    elif "nextjs" in text:
+        tech["framework"] = "Next.js"
+
+    elif "express" in text:
+        tech["framework"] = "Express"
+
+    elif "rails" in text:
+        tech["framework"] = "Ruby on Rails"
+
+    elif "bootstrap" in text:
+        tech["framework"] = "Bootstrap"
+
+    # --- CMS ---
     if "wordpress" in text:
         tech["cms"] = "WordPress"
 
@@ -62,8 +110,16 @@ def detect_technology(headers, banner):
     elif "joomla" in text:
         tech["cms"] = "Joomla"
 
-    # Frontend
+    elif "shopify" in text:
+        tech["cms"] = "Shopify"
 
+    elif "wix" in text:
+        tech["cms"] = "Wix"
+
+    elif "squarespace" in text:
+        tech["cms"] = "Squarespace"
+
+    # --- Frontend ---
     if "react" in text:
         tech["frontend"] = "React"
 
@@ -72,5 +128,14 @@ def detect_technology(headers, banner):
 
     elif "angular" in text:
         tech["frontend"] = "Angular"
+
+    elif "jquery" in text:
+        tech["frontend"] = "jQuery"
+
+    elif "tailwind" in text:
+        tech["frontend"] = "Tailwind CSS"
+
+    elif "bootstrap" in text:
+        tech["frontend"] = "Bootstrap"
 
     return tech
