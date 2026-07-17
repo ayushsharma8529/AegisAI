@@ -1,3 +1,5 @@
+import React from 'react';
+
 function FindingsTable({ findings }) {
   if (!findings || findings.length === 0) {
     return null;
@@ -28,6 +30,7 @@ function FindingsTable({ findings }) {
               <th className="p-4">Severity</th>
               <th className="p-4">MITRE</th>
               <th className="p-4">CVE</th>
+              <th className="p-4">Web Vulns</th>
               <th className="p-4">Recommendation</th>
             </tr>
           </thead>
@@ -60,6 +63,17 @@ function FindingsTable({ findings }) {
                   {item.cves?.length > 0
                     ? item.cves[0].id
                     : "-"}
+                </td>
+
+                {/* Step 2: Added Web Vulns cell right after CVE */}
+                <td className="p-4">
+                  {item.web_vulnerabilities?.length ? (
+                    <span className="rounded-full bg-red-600 px-3 py-1 text-sm font-bold">
+                      {item.web_vulnerabilities.length}
+                    </span>
+                  ) : (
+                    "-"
+                  )}
                 </td>
 
                 <td className="p-4">

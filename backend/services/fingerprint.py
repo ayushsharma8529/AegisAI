@@ -1,4 +1,4 @@
-def fingerprint_service(service, banner):
+def fingerprint_service(service, banner, port):
 
     info = {
         "product": service,
@@ -8,12 +8,21 @@ def fingerprint_service(service, banner):
     }
 
     if not banner:
-        return info
+        banner = ""
 
     text = banner.lower()
 
+    # VMware
+    if "vmware" in text:
+        info.update({
+            "product": "VMware Authentication Daemon",
+            "vendor": "VMware",
+            "technology": "VMware",
+            "confidence": "High"
+        })
+
     # Apache
-    if "apache" in text:
+    elif "apache" in text:
         info.update({
             "product": "Apache HTTP Server",
             "vendor": "Apache Foundation",
@@ -39,7 +48,7 @@ def fingerprint_service(service, banner):
             "confidence": "High"
         })
 
-    # IIS
+    # Microsoft IIS
     elif "microsoft-iis" in text or "iis" in text:
         info.update({
             "product": "Microsoft IIS",
@@ -48,8 +57,8 @@ def fingerprint_service(service, banner):
             "confidence": "High"
         })
 
-    # Google Frontend
-    elif "google" in text:
+    # Google
+    elif "google" in text or "gws" in text:
         info.update({
             "product": "Google Frontend",
             "vendor": "Google",
@@ -66,7 +75,16 @@ def fingerprint_service(service, banner):
             "confidence": "High"
         })
 
-    # SMB
+    # Meta / Facebook
+    elif "proxygen" in text:
+        info.update({
+            "product": "Meta Proxygen",
+            "vendor": "Meta",
+            "technology": "Proxygen",
+            "confidence": "High"
+        })
+
+    # Service based detection
     elif service == "MICROSOFT-DS":
         info.update({
             "product": "Microsoft SMB",
@@ -75,7 +93,6 @@ def fingerprint_service(service, banner):
             "confidence": "Medium"
         })
 
-    # RPC
     elif service == "EPMAP":
         info.update({
             "product": "RPC Endpoint Mapper",
@@ -83,12 +100,22 @@ def fingerprint_service(service, banner):
             "technology": "RPC",
             "confidence": "Medium"
         })
-    elif  "proxygen" in text:
+
+    # Port based fallback
+    elif port == 902:
         info.update({
-        "product": "Meta Proxygen",
-        "vendor": "Meta",
-        "technology": "Proxygen",
-        "confidence": "High"
-    })
+            "product": "VMware ESXi",
+            "vendor": "VMware",
+            "technology": "Virtualization",
+            "confidence": "Medium"
+        })
+
+    elif port == 912:
+        info.update({
+            "product": "VMware Authentication Daemon",
+            "vendor": "VMware",
+            "technology": "Virtualization",
+            "confidence": "Medium"
+        })
 
     return info

@@ -6,6 +6,15 @@ import FindingsTable from "../components/FindingsTable";
 import AnalysisCard from "../components/AnalysisCard";
 import StatsCards from "../components/StatsCards";
 import HttpInfoCard from "../components/HttpInfoCard";
+import TlsInfoCard from "../components/TlsInfoCard";
+import TechnologyCard from "../components/TechnologyCard";
+import DirectoryCard from "../components/DirectoryCard";
+import WebVulnerabilityCard from "../components/WebVulnerabilityCard";
+
+// Chart aur Gauge Imports (Side-by-side render karne ke liye)
+import SeverityChart from "../components/SeverityChart";
+import RiskGauge from "../components/RiskGauge";
+import ServiceChart from "../components/ServiceChart";
 
 function Dashboard() {
   const [target, setTarget] = useState("");
@@ -20,7 +29,6 @@ function Dashboard() {
   async function handleScan() {
     try {
       setLoading(true);
-
       setResults([]);
 
       const targets = target
@@ -40,6 +48,8 @@ function Dashboard() {
         });
 
         tempResults.push(response.data);
+        console.log("Scan Data:", response.data);
+        console.log("Risk Score:", response.data.risk_score);
 
         setResults([...tempResults]);
       }
@@ -123,13 +133,30 @@ function Dashboard() {
 
           <StatsCards result={result} />
 
+          {/* GRID VIEW: Severity Chart & Risk Gauge side-by-side */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <SeverityChart findings={result.findings} />
+            <RiskGauge score={result.risk_score} />
+          </div>
+          <div className="mt-6">
+            <ServiceChart findings={result.findings} />
+          </div>
+
           <HostCard host={result.host} />
 
           <FindingsTable findings={result.findings} />
 
           <HttpInfoCard findings={result.findings} />
 
+          <TlsInfoCard findings={result.findings} />
+
+          <DirectoryCard findings={result.findings} />
+
           <AnalysisCard analysis={result.analysis} />
+
+          <TechnologyCard findings={result.findings} />
+
+          <WebVulnerabilityCard findings={result.findings} />
 
         </div>
       ))}
