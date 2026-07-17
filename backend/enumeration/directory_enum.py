@@ -27,19 +27,14 @@ COMMON_PATHS = [
 
 
 def enumerate_directories(target, port):
-
     protocol = "https" if port == 443 else "http"
-
     base_url = f"{protocol}://{target}"
-
     results = []
 
     for path in COMMON_PATHS:
-
         url = base_url + path
 
         try:
-
             response = requests.get(
                 url,
                 timeout=3,
@@ -52,18 +47,12 @@ def enumerate_directories(target, port):
 
             print(path, response.status_code)
 
-            # Sirf useful responses save karo
-            if response.status_code in [200, 301, 302, 401, 403]:
-
+            # 🔥 FIX: 301/302 spam removed. Reporting only genuinely accessible or restricted resources.
+            if response.status_code in [200, 401, 403]:
                 results.append({
-
                     "path": path,
                     "status": response.status_code,
-                    "redirect": response.headers.get(
-                        "Location",
-                        "None"
-                    )
-
+                    "redirect": response.headers.get("Location", "None")
                 })
 
         except requests.RequestException:

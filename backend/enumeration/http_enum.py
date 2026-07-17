@@ -33,7 +33,7 @@ def enumerate_http(target, port):
         response = requests.get(
             url,
             timeout=5,
-            allow_redirects=True,
+            allow_redirects=False,
             verify=False,
             headers={
                 "User-Agent": "AegisAI Security Scanner/1.0"
