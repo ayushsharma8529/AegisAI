@@ -1,5 +1,6 @@
 import ssl
 import socket
+import ipaddress  # 🔥 Added for target validation
 from concurrent.futures import ThreadPoolExecutor
 from services.banner import grab_banner
 from services.risk_engine import analyze_risk
@@ -149,6 +150,29 @@ def scan_port(target, port):
 
 
 def run_scan(target, start_port, end_port):
+    # 🔥 Step 1: Target validation block at the very beginning
+    try:
+        try:
+            ipaddress.ip_address(target)
+        except ValueError:
+            socket.gethostbyname(target)
+    except Exception:
+        return {
+            "target": target,
+            "host": {
+                "hostname": "Unknown",
+                "os": "Unknown",
+                "ip": target,
+                "open_ports": 0,
+                "overall_risk": "Unknown"
+            },
+            "status": "failed",
+            "message": "Target could not be resolved.",
+            "executive_summary": "Scan could not be completed because the target is invalid or unreachable.",
+            "risk_score": 0,
+            "findings": []
+        }
+
     findings = []
     ports = range(start_port, end_port + 1)
 

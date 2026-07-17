@@ -1,23 +1,24 @@
 import requests
 from bs4 import BeautifulSoup
 import urllib3
+
+# Suppress insecure request warnings (since verify=False is used)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def enumerate_http(target, port):
-
     scheme = "https" if port == 443 else "http"
     url = f"{scheme}://{target}"
 
-    # Step 1 — Result dictionary expand kiya gaya
+    # Step 1 — Result dictionary expanded with 'final_url' and placeholder keys
     result = {
         "title": "Unknown",
         "server": "Unknown",
         "powered_by": "Unknown",
         "redirect": None,
+        "final_url": url,  # Default to initial url
         "cookies": [],
         "security_headers": {},
-
         "content_type": "Unknown",
         "content_length": "Unknown",
         "cache_control": "Unknown",
@@ -28,73 +29,50 @@ def enumerate_http(target, port):
     }
 
     try:
-        # Step 4 — User-Agent custom headers ke sath request send ki
+        # Production Fix 1: Changed allow_redirects to True to hit final destination
         response = requests.get(
             url,
             timeout=5,
-            allow_redirects=False,
+            allow_redirects=True,
             verify=False,
             headers={
                 "User-Agent": "AegisAI Security Scanner/1.0"
             }
         )
 
-        # Title
-        soup = BeautifulSoup(response.text, "html.parser")
+        # Production Fix 3: Storing the absolute final URL after all redirects
+        result["final_url"] = response.url
 
+        # Production Fix 2: Check if redirects happened and preserve the destination path
+        if response.history:
+            result["redirect"] = response.url
+        else:
+            result["redirect"] = None
+
+        # Title Parse (from final page content)
+        soup = BeautifulSoup(response.text, "html.parser")
         if soup.title:
             result["title"] = soup.title.text.strip()
 
-        # Server Header
-        result["server"] = response.headers.get(
-            "Server",
-            "Unknown"
-        )
+        # Server Header (from final destination headers)
+        result["server"] = response.headers.get("Server", "Unknown")
 
         # X-Powered-By
-        result["powered_by"] = response.headers.get(
-            "X-Powered-By",
-            "Unknown"
-        )
+        result["powered_by"] = response.headers.get("X-Powered-By", "Unknown")
 
-        # Step 2 — Response headers se nayi values extract ki gayi
-        result["content_type"] = response.headers.get(
-            "Content-Type",
-            "Unknown"
-        )
-        result["content_length"] = response.headers.get(
-            "Content-Length",
-            "Unknown"
-        )
-        result["cache_control"] = response.headers.get(
-            "Cache-Control",
-            "Unknown"
-        )
-        result["etag"] = response.headers.get(
-            "ETag",
-            "Unknown"
-        )
-        result["permissions_policy"] = response.headers.get(
-            "Permissions-Policy",
-            "Unknown"
-        )
-        result["x_generator"] = response.headers.get(
-            "X-Generator",
-            "Unknown"
-        )
-        result["via"] = response.headers.get(
-            "Via",
-            "Unknown"
-        )
+        # Step 2 — Response headers extraction (Updates fetched from final landing page)
+        result["content_type"] = response.headers.get("Content-Type", "Unknown")
+        result["content_length"] = response.headers.get("Content-Length", "Unknown")
+        result["cache_control"] = response.headers.get("Cache-Control", "Unknown")
+        result["etag"] = response.headers.get("ETag", "Unknown")
+        result["permissions_policy"] = response.headers.get("Permissions-Policy", "Unknown")
+        result["x_generator"] = response.headers.get("X-Generator", "Unknown")
+        result["via"] = response.headers.get("Via", "Unknown")
 
-        # Redirect
-        if "Location" in response.headers:
-            result["redirect"] = response.headers["Location"]
-
-        # Cookies
+        # Cookies (Aggregated from final state session)
         result["cookies"] = list(response.cookies.keys())
 
-        # Step 3 — Security Headers list improve ki gayi (Permissions-Policy added)
+        # Step 3 — Security Headers verification against final response
         headers = [
             "Strict-Transport-Security",
             "Content-Security-Policy",

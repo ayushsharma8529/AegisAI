@@ -6,11 +6,12 @@ from services.scanner import run_scan
 from services.report_generator import generate_html_report
 from ai.analyzer import generate_analysis
 
-# --- Imports updated with get_scan_by_id ---
+# --- Step 2: Imports updated with delete_scan & get_scan_by_id ---
 from core.scan_repository import (
     save_scan,
     get_all_scans,
-    get_scan_by_id
+    get_scan_by_id,
+    delete_scan
 )
 
 LAST_SCAN = None
@@ -56,7 +57,6 @@ def report():
     return generate_html_report(LAST_SCAN)
 
 
-# --- Step 1 & 2: Dynamic ID-based Report Route Added ---
 @router.get("/report/{scan_id}", response_class=HTMLResponse)
 def report_by_id(scan_id: int):
     scan = get_scan_by_id(scan_id)
@@ -80,3 +80,12 @@ def history():
         }
         for row in scans
     ]
+
+
+# --- Step 3: DELETE Endpoint ---
+@router.delete("/history/{scan_id}")
+def delete_history(scan_id: int):
+    delete_scan(scan_id)
+    return {
+        "message": "Scan deleted successfully"
+    }

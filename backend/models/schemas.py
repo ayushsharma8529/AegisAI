@@ -14,4 +14,5 @@ class ScanResponse(BaseModel):
     message: str
     findings: list
     analysis: str
+    executive_summary: str
     risk_score: int
