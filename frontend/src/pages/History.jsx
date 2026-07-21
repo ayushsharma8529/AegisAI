@@ -6,6 +6,9 @@ function History() {
   // 🔥 Step 1: Search state
   const [search, setSearch] = useState("");
 
+  // Base URL dynamically fetched from the axios instance configuration
+  const API_BASE_URL = api.defaults.baseURL;
+
   useEffect(() => {
     async function loadHistory() {
       try {
@@ -110,11 +113,11 @@ function History() {
                   </td>
 
                   <td className="p-3 text-center flex items-center justify-center gap-2">
-                    {/* View Report Button */}
+                    {/* View Report Button - Environment Dynamic URL */}
                     <button
                       onClick={() =>
                         window.open(
-                          `http://127.0.0.1:8000/report/${scan.id}`,
+                          `${API_BASE_URL}/report/${scan.id}`,
                           "_blank"
                         )
                       }
